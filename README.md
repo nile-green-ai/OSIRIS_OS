@@ -1,4 +1,4 @@
-(https://github.com/user-attachments/files/24890606/README-7.md)# 🌌 PermaMind Core: OSIRIS_OS Architecture
+[README-7.md](https://github.com/user-attachments/files/24890637/README-7.md)# 🌌 PermaMind Core: OSIRIS_OS Architecture
 
 ![Status](https://img.shields.io/badge/status-production-brightgreen) ![Coherence](https://img.shields.io/badge/coherence-ancient_wisdom-blueviolet) ![License](https://img.shields.io/badge/license-proprietary-red)
 
@@ -985,4 +985,6 @@ Creator of PermaMind & Voidchi Universe™
 ---
 
 ⭐ **Star this repo if you believe ancient wisdom encoded computation** ⭐
+
+
 
