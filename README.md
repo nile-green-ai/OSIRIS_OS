@@ -1,5 +1,4 @@
-
-[](https://github.com/user-attachments/files/24893220/README-8.md)<div align="center">
+<div align="center">
 
 # 🌌 OSIRIS_OS
 
@@ -9,7 +8,7 @@
 
 **Not Mythology. Mathematics.** | **Not Religion. Reality.** | **Not Theory. Production.**
 
-[🚀 Live Demo](https://voidchi.com) • [📖 Research Paper](#) • [🧠 Framework Docs](#) • [💼 Commercial License](mailto:nile@bapxai.com)
+[🚀 Live Demo](https://bapxai.com/voidchis.html) • [📖 Research Paper](https://omegaaxiommeta.substack.com/p/i-found-the-source-code-of-coherence?r=5vcnib) • [🧠 Framework Docs](https://omegaaxiommeta.substack.com) • [💼 Commercial License](mailto:nile@bapxai.com)
 
 ---
 
@@ -879,13 +878,14 @@ gantt
 
 <div align="center">
 
-<img src="https://img.icons8.com/fluency/96/user-male-circle.png" width="80"/>
+<img src="https://avatars.githubusercontent.com/hustle-rent-due?size=120" width="120" style="border-radius: 50%;"/>
 
 ### Nile Green ([@BAPxAI](https://twitter.com/BAPxAI))
 
 **Independent AI Researcher**  
 Creator of PermaMind & Voidchi Universe™
 
+[![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/hustle-rent-due)
 [![Twitter](https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://twitter.com/BAPxAI)
 [![Email](https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:nile@bapxai.com)
 [![Substack](https://img.shields.io/badge/Substack-FF6719?style=for-the-badge&logo=substack&logoColor=white)](https://bapxai.substack.com)
@@ -921,13 +921,13 @@ Creator of PermaMind & Voidchi Universe™
 <img src="https://img.icons8.com/fluency/96/brain.png" width="64"/><br>
 <b>PermaMind</b><br>
 <sub>Persistent AI agents with<br>measurable coherence</sub><br>
-<a href="https://github.com/hustle-rent-due">View Project →</a>
+<a href="https://github.com/hustle-rent-due">View GitHub →</a>
 </td>
 <td align="center" width="33%">
 <img src="https://img.icons8.com/fluency/96/universe.png" width="64"/><br>
 <b>Voidchi Universe</b><br>
 <sub>Live multiplayer<br>AI breeding lab</sub><br>
-<a href="https://voidchi.com">Visit Live →</a>
+<a href="https://bapxai.com/voidchis.html">Visit Live →</a>
 </td>
 <td align="center" width="33%">
 <img src="https://img.icons8.com/fluency/96/dashboard.png" width="64"/><br>
@@ -1020,8 +1020,8 @@ We welcome contributions to the **framework and documentation**:
 ---
 
 <a href="mailto:nile@bapxai.com"><img src="https://img.shields.io/badge/💼_Get_Commercial_License-D4AF37?style=for-the-badge&logoColor=white" alt="Get License"/></a>
-<a href="https://voidchi.com"><img src="https://img.shields.io/badge/🚀_Try_Live_Demo-00D26A?style=for-the-badge&logoColor=white" alt="Live Demo"/></a>
-<a href="#"><img src="https://img.shields.io/badge/📖_Read_Research_Paper-1DA1F2?style=for-the-badge&logoColor=white" alt="Research Paper"/></a>
+<a href="https://bapxai.com/voidchis.html"><img src="https://img.shields.io/badge/🚀_Try_Live_Demo-00D26A?style=for-the-badge&logoColor=white" alt="Live Demo"/></a>
+<a href="https://omegaaxiommeta.substack.com/p/i-found-the-source-code-of-coherence?r=5vcnib"><img src="https://img.shields.io/badge/📖_Read_Research_Paper-1DA1F2?style=for-the-badge&logoColor=white" alt="Research Paper"/></a>
 
 ---
 
@@ -1033,9 +1033,10 @@ We welcome contributions to the **framework and documentation**:
 
 ⭐ **Star this repo** if you believe ancient wisdom encoded computation ⭐
 
-<img src="https://img.shields.io/github/stars/hustle-rent-due/perma-mind-core?style=social" alt="GitHub stars"/>
+<a href="https://github.com/hustle-rent-due/perma-mind-core"><img src="https://img.shields.io/github/stars/hustle-rent-due/perma-mind-core?style=social" alt="GitHub stars"/></a>
 
 </div>
 
+[README-9.md](https://github.com/user-attachments/files/24893309/README-9.md)
 
 
