@@ -10,13 +10,11 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime
 import json
 
-# Import all Kemetic modules
-from ra import RA
-from thoth import THOTH
-from maat import MAAT
-from osiris import OSIRIS
-from isis import ISIS
-from anubis import ANUBIS
+from modules.ra_fixed import RA
+from modules.thoth import THOTH
+from metrics.maat import MAAT
+from agents.isis import ISIS
+from agents.anubis import ANUBIS
 
 
 class OSIRIS_OS:
