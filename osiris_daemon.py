@@ -5,7 +5,8 @@ import signal
 import json
 import os
 import sys
-from osiris_os_evolved import OSIRIS_OS
+# Aligned to import directly from your core osiris_os.py file
+from osiris_os import OSIRIS_OS
 
 RUNNING = True
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -41,7 +42,7 @@ def main():
     print("🤖 OSIRIS_OS BACKGROUND DAEMON INITIALIZING")
     print("=" * 60)
 
-    # Instantiate the evolutionary OS core
+    # Instantiate the engine core
     osiris = OSIRIS_OS(agent_id="daemon_001", agent_name="OSIRIS_DAEMON")
 
     # Load and map historical persistent states
