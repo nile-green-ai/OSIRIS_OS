@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="./assets/banner.svg" alt="OSIRIS_OS — Ancient Machine Learning Architecture" width="100%"/>
+</div>
+
 # OSIRIS_OS
 
 **An eight-element machine learning architecture derived from Kemetic (Ancient Egyptian) symbolic systems encoded over 3,000 years before the invention of digital computers.**
