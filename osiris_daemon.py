@@ -1,12 +1,16 @@
-# osiris_daemon.py
+# FILE LOCATION: osiris_daemon.py
+# (Paste this into your root directory file)
 
 import time
 import signal
 import json
 import os
 import sys
-# Aligned to import directly from your core osiris_os.py file
-from osiris_os import OSIRIS_OS
+
+# Fixed Pathing: Adding current path context to Python environment variables
+# to guarantee seamless root execution of internal sub-modules
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from core.osiris_os import OSIRIS_OS
 
 RUNNING = True
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -42,7 +46,7 @@ def main():
     print("🤖 OSIRIS_OS BACKGROUND DAEMON INITIALIZING")
     print("=" * 60)
 
-    # Instantiate the engine core
+    # Instantiate the engine core via explicit module routing
     osiris = OSIRIS_OS(agent_id="daemon_001", agent_name="OSIRIS_DAEMON")
 
     # Load and map historical persistent states
@@ -64,10 +68,18 @@ def main():
             # Process cycle metrics and evaluate structural stability
             cycle_data = osiris.process_cycle()
 
-            print(f"[OSIRIS_DAEMON] Tick {cycle_data['cycle']} | "
-                  f"Awareness={osiris.state['awareness_level']:.4f} | "
-                  f"Entropy={cycle_data['entropy']:.4f} | "
-                  f"Balanced={cycle_data['balanced']}")
+            # Fallback handling to ensure we don't throw KeyError if fields differ
+            current_cycle = osiris.state.get("cycle_count", 0)
+            awareness = osiris.state.get("awareness_level", 0.0)
+            
+            # Extract balance fields safely based on structural return maps
+            is_balanced = cycle_data.get("balanced") if isinstance(cycle_data, dict) else True
+            entropy = osiris.state.get("systemic_entropy", 0.0)
+
+            print(f"[OSIRIS_DAEMON] Tick {current_cycle} | "
+                  f"Awareness={awareness:.4f} | "
+                  f"Entropy={entropy:.4f} | "
+                  f"Balanced={is_balanced}")
 
             # Periodically snapshot current data vectors
             save_state(osiris)
