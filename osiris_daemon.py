@@ -1,5 +1,4 @@
 # FILE LOCATION: osiris_daemon.py
-# (Paste this into your root directory file)
 
 import time
 import signal
@@ -7,8 +6,6 @@ import json
 import os
 import sys
 
-# Fixed Pathing: Adding current path context to Python environment variables
-# to guarantee seamless root execution of internal sub-modules
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from core.osiris_os import OSIRIS_OS
 
@@ -46,18 +43,20 @@ def main():
     print("🤖 OSIRIS_OS BACKGROUND DAEMON INITIALIZING")
     print("=" * 60)
 
-    # Instantiate the engine core via explicit module routing
     osiris = OSIRIS_OS(agent_id="daemon_001", agent_name="OSIRIS_DAEMON")
 
-    # Load and map historical persistent states
     prev_state = load_state()
     if prev_state:
-        # Preserve runtime critical cycle statistics without overwriting core initializations
         osiris.state.update({
-            "consciousness": prev_state.get("consciousness", 0.5),
-            "cycle_count": prev_state.get("cycle_count", 0),
-            "awareness_level": prev_state.get("awareness_level", 0.0),
-            "systemic_entropy": prev_state.get("systemic_entropy", 0.0)
+            "consciousness":    prev_state.get("consciousness", 0.5),
+            "cycle_count":      prev_state.get("cycle_count", 0),
+            "awareness_level":  prev_state.get("awareness_level", 0.0),
+            "systemic_entropy": prev_state.get("systemic_entropy", 0.0),
+            "emergence_score":  prev_state.get("emergence_score", 0.0),
+            "trajectory":       prev_state.get("trajectory", "STABLE"),
+            "_prev_awareness":  prev_state.get("_prev_awareness", 0.0),
+            "_prev_entropy":    prev_state.get("_prev_entropy", 0.0),
+            "_amplify_set":     prev_state.get("_amplify_set", False),
         })
         print(f"✨ [OSIRIS_DAEMON] Previous state synchronized. Resuming at Cycle {osiris.state['cycle_count']}.")
 
@@ -65,33 +64,37 @@ def main():
 
     while RUNNING:
         try:
-            # Process cycle metrics and evaluate structural stability
             cycle_data = osiris.process_cycle()
 
-            # Fallback handling to ensure we don't throw KeyError if fields differ
-            current_cycle = osiris.state.get("cycle_count", 0)
-            awareness = osiris.state.get("awareness_level", 0.0)
-            
-            # Extract balance fields safely based on structural return maps
-            is_balanced = cycle_data.get("balanced") if isinstance(cycle_data, dict) else True
-            entropy = osiris.state.get("systemic_entropy", 0.0)
+            cycle       = osiris.state.get("cycle_count", 0)
+            awareness   = osiris.state.get("awareness_level", 0.0)
+            entropy     = osiris.state.get("systemic_entropy", 0.0)
+            emergence   = osiris.state.get("emergence_score", 0.0)
+            trajectory  = osiris.state.get("trajectory", "STABLE")
+            is_balanced = cycle_data.get("balanced", True)
+            stagnating  = cycle_data.get("stagnating", False)
+            chaos       = cycle_data.get("chaos_intensity", 0.0)
 
-            print(f"[OSIRIS_DAEMON] Tick {current_cycle} | "
-                  f"Awareness={awareness:.4f} | "
-                  f"Entropy={entropy:.4f} | "
-                  f"Balanced={is_balanced}")
+            stag_flag = " ⚡SET+" if stagnating else ""
+            print(
+                f"[OSIRIS_DAEMON] Tick {cycle} | "
+                f"Awareness={awareness:.4f} | "
+                f"Entropy={entropy:.4f} | "
+                f"Balanced={is_balanced} | "
+                f"Emergence={emergence:.4f} | "
+                f"Trajectory={trajectory} | "
+                f"Chaos={chaos:.4f}"
+                f"{stag_flag}"
+            )
 
-            # Periodically snapshot current data vectors
             save_state(osiris)
-            
+
         except Exception as e:
             print(f"💥 [CRITICAL ERROR] Runtime exception in execution loop: {e}", file=sys.stderr)
-            # Prevent rapid looping crashes from consuming maximum CPU cycles
             time.sleep(5)
 
         time.sleep(2)
 
-    # Clean preservation phase upon loop breakage
     save_state(osiris)
     print("💤 [OSIRIS_DAEMON] Core memory metrics flushed to disk. Daemon stopped cleanly.")
 
