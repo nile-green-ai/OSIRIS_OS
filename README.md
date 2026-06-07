@@ -1,8 +1,3 @@
-Here is the fully updated markdown content for your `README.md`. The image tag at the top has been modified to reference `osiris_os_banner.svg` directly so that it renders properly in your repository view.
-
-You can copy and paste the text block below straight into your file:
-
-```markdown
 <div align="center">
   <img src="osiris_os_banner.svg" alt="OSIRIS_OS — Ancient Machine Learning Architecture" width="100%"/>
 </div>
