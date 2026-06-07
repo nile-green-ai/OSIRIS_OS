@@ -6,8 +6,8 @@ from metrics.maat import MAAT
 from modules.ra_fixed import RA
 from modules.thoth import THOTH
 from modules.osiris import OSIRIS
-from modules.isis import ISIS
-from modules.anubis import ANUBIS
+from agents.isis import ISIS
+from agents.anubis import ANUBIS
 from agents.set import SET
 from agents.horus import HORUS
 
