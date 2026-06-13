@@ -1,23 +1,5 @@
-"""
-bridge.py — OSIRIS_OS <-> ThermoMind Bidirectional Bridge
-Author: Nile Green — PermaMind AI
-
-Runs a unified cycle where both engines feed each other:
-
-  OSIRIS emergence + entropy + trajectory → ThermoMind reality vector
-  ThermoMind Φ + regime + curiosity      → OSIRIS RA seed + SET gate
-
-Neither engine's internal code is modified.
-This file is the handshake layer between them.
-
-Environment variables:
-  THERMOMIND_URL     — ThermoMind API base URL (default: Railway endpoint)
-  THERMOMIND_API_KEY — API key if required
-  THERMOMIND_AGENT   — agent ID for ThermoMind (default: thermomind-core)
-  OSIRIS_STATE_FILE  — path to osiris_state.json (default: ./osiris_state.json)
-  BRIDGE_INTERVAL    — seconds between unified cycles (default: 30)
-  BRIDGE_LOG_EVERY   — log full state every N cycles (default: 5)
-"""
+# bridge.py — OSIRIS_OS <-> ThermoMind Bidirectional Bridge (UUID + TCI Version)
+# Author: Nile Green — Updated for UUID sessions + TCI full integration (aggressive)
 
 import os
 import sys
@@ -32,13 +14,16 @@ from datetime import datetime
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from core.osiris_os import OSIRIS_OS
 
+# TCI toolkit imports
+from tci_calculator import TCICalculator
+from k_estimator import KEstimator
+
 # =============================================================================
 # CONFIG
 # =============================================================================
 
 THERMOMIND_URL   = os.getenv("THERMOMIND_URL", "https://thermomind-production.up.railway.app")
 THERMOMIND_KEY   = os.getenv("THERMOMIND_API_KEY", "")
-THERMOMIND_AGENT = os.getenv("THERMOMIND_AGENT", "thermomind-core")
 OSIRIS_STATE     = os.getenv("OSIRIS_STATE_FILE", os.path.join(os.path.dirname(__file__), "osiris_state.json"))
 INTERVAL         = float(os.getenv("BRIDGE_INTERVAL", "30"))
 LOG_EVERY        = int(os.getenv("BRIDGE_LOG_EVERY", "5"))
@@ -55,37 +40,58 @@ logging.basicConfig(
 log = logging.getLogger("bridge")
 
 # =============================================================================
-# THERMOMIND API CLIENT
+# THERMOMIND API CLIENT (UUID VERSION)
 # =============================================================================
 
 class ThermoMindClient:
-    def __init__(self, base_url: str, api_key: str, agent_id: str):
+    def __init__(self, base_url: str, api_key: str):
         self.base_url = base_url.rstrip("/")
-        self.agent_id = agent_id
+        self.session_id = None
         self.headers = {"Content-Type": "application/json"}
         if api_key:
             self.headers["Authorization"] = f"Bearer {api_key}"
 
+    def create_session(self):
+        url = f"{self.base_url}/v1/sessions"
+        payload = {"agent_name": "osiris-thermo-bridge"}
+        try:
+            r = requests.post(url, json=payload, headers=self.headers, timeout=10)
+            r.raise_for_status()
+            data = r.json()
+            self.session_id = data.get("session_id")
+            log.info(f"Created ThermoMind session: {self.session_id}")
+            return self.session_id
+        except Exception as e:
+            log.error(f"Failed to create ThermoMind session: {e}")
+            return None
+
     def run_cycle(self, message: str) -> dict:
-        """Fire a ThermoMind cycle with a text message. Returns state dict."""
-        url = f"{self.base_url}/v1/sessions/{self.agent_id}/events"
+        if not self.session_id:
+            self.create_session()
+        if not self.session_id:
+            return {}
+
+        url = f"{self.base_url}/v1/sessions/{self.session_id}/events"
         payload = {"type": "message", "content": message, "role": "user"}
+
         try:
             r = requests.post(url, json=payload, headers=self.headers, timeout=15)
             r.raise_for_status()
             return r.json()
-        except requests.RequestException as e:
+        except Exception as e:
             log.error(f"ThermoMind API error: {e}")
             return {}
 
     def get_state(self) -> dict:
-        """Fetch full ThermoMind state."""
-        url = f"{self.base_url}/v1/sessions/{self.agent_id}/state"
+        if not self.session_id:
+            return {}
+
+        url = f"{self.base_url}/v1/sessions/{self.session_id}/state"
         try:
             r = requests.get(url, headers=self.headers, timeout=10)
             r.raise_for_status()
             return r.json()
-        except requests.RequestException as e:
+        except Exception as e:
             log.error(f"ThermoMind state fetch error: {e}")
             return {}
 
@@ -100,22 +106,12 @@ TRAJECTORY_MAP = {
 }
 
 REGIME_SET_GATE = {
-    "drift":  True,   # high novelty → amplify SET
-    "noisy":  False,  # normal
-    "stable": False,  # consolidated → dampen SET
+    "drift":  True,
+    "noisy":  False,
+    "stable": False,
 }
 
-
 def osiris_to_thermo_message(osiris_cycle: dict, osiris_state: dict) -> str:
-    """
-    Convert OSIRIS cycle output into a descriptive message for ThermoMind.
-    ThermoMind's text_to_reality_vector will parse this into [Φ₀, Φ₁, Φ₂].
-
-    We encode the three key signals in the message structure itself:
-    - Interrogative tension (Φ₀) ← trajectory urgency
-    - Mnemonic phase (Φ₁)       ← entropy level
-    - Affective energy (Φ₂)     ← emergence score
-    """
     emergence   = osiris_cycle.get("emergence_score", 0.5)
     entropy     = osiris_cycle.get("entropy", 0.0)
     trajectory  = osiris_cycle.get("trajectory", "STABLE")
@@ -123,11 +119,6 @@ def osiris_to_thermo_message(osiris_cycle: dict, osiris_state: dict) -> str:
     verdict     = osiris_cycle.get("verdict", "UNKNOWN")
     chaos       = osiris_cycle.get("chaos_intensity", 0.1)
     cycle       = osiris_state.get("cycle_count", 0)
-
-    # Build message with structural properties that encode the signals:
-    # Questions → high Φ₀ (interrogative tension) when system is stressed
-    # Word complexity → Φ₁ (mnemonic phase) reflects entropy
-    # Character density → Φ₂ (affective energy) reflects emergence
 
     tension_marker = "?" * max(1, int((1.0 - emergence) * 3)) if trajectory == "DESCENDING" else "."
     entropy_word   = "thermodynamic" if entropy > 0.8 else "substrate" if entropy > 0.4 else "coherent"
@@ -141,16 +132,7 @@ def osiris_to_thermo_message(osiris_cycle: dict, osiris_state: dict) -> str:
     )
     return msg
 
-
 def thermo_to_osiris_seed(thermo_state: dict) -> dict:
-    """
-    Convert ThermoMind state into OSIRIS RA seed + SET gate signals.
-
-    ThermoMind Φ        → primed_awareness for RA
-    ThermoMind regime   → amplify_set flag for SET
-    ThermoMind curiosity → delta magnitude multiplier
-    ThermoMind stability → consciousness floor
-    """
     phi      = thermo_state.get("phi", 0.5)
     regime   = thermo_state.get("regime", "noisy")
     traits   = thermo_state.get("traits", {})
@@ -161,17 +143,13 @@ def thermo_to_osiris_seed(thermo_state: dict) -> dict:
     amplify_set = REGIME_SET_GATE.get(regime, False)
 
     return {
-        # RA seed — primes awareness at top of next OSIRIS cycle
         "ra_seed": {
             "primed_awareness":    min(1.0, phi * 0.8 + curiosity * 0.2),
             "emergence_momentum":  phi,
             "stagnation_pressure": 0,
         },
-        # SET gate — ThermoMind drift regime forces chaos amplification
         "amplify_set": amplify_set,
-        # Consciousness floor from ThermoMind stability
         "consciousness_floor": max(0.1, stability * 0.5),
-        # Delta multiplier from plasticity
         "delta_multiplier": 0.5 + plasticity,
     }
 
@@ -184,22 +162,10 @@ def load_osiris_state(osiris: OSIRIS_OS) -> None:
         try:
             with open(OSIRIS_STATE) as f:
                 prev = json.load(f)
-            osiris.state.update({
-                "consciousness":    prev.get("consciousness", 0.5),
-                "cycle_count":      prev.get("cycle_count", 0),
-                "awareness_level":  prev.get("awareness_level", 0.0),
-                "systemic_entropy": prev.get("systemic_entropy", 0.0),
-                "emergence_score":  prev.get("emergence_score", 0.0),
-                "trajectory":       prev.get("trajectory", "STABLE"),
-                "_prev_awareness":  prev.get("_prev_awareness", 0.0),
-                "_prev_entropy":    prev.get("_prev_entropy", 0.0),
-                "_amplify_set":     prev.get("_amplify_set", False),
-                "_ra_seed":         prev.get("_ra_seed", {}),
-            })
-            log.info(f"OSIRIS state loaded. Resuming at cycle {osiris.state['cycle_count']}.")
+            osiris.state.update(prev)
+            log.info(f"OSIRIS state loaded. Resuming at cycle {osiris.state.get('cycle_count', 0)}.")
         except Exception as e:
             log.warning(f"OSIRIS state load failed, fresh start: {e}")
-
 
 def save_osiris_state(osiris: OSIRIS_OS) -> None:
     try:
@@ -209,52 +175,89 @@ def save_osiris_state(osiris: OSIRIS_OS) -> None:
         log.error(f"OSIRIS state save failed: {e}")
 
 # =============================================================================
-# UNIFIED BRIDGE CYCLE
+# UNIFIED BRIDGE CYCLE + TCI
 # =============================================================================
 
-def run_bridge_cycle(
-    osiris: OSIRIS_OS,
-    thermo: ThermoMindClient,
-    cycle_num: int,
-    prev_thermo_state: dict,
-) -> dict:
-    """
-    One unified cycle:
-    1. Inject ThermoMind signals into OSIRIS
-    2. Run OSIRIS cycle
-    3. Convert OSIRIS output to ThermoMind message
-    4. Run ThermoMind cycle
-    5. Return new ThermoMind state for next cycle
-    """
-
-    # ── Step 1: ThermoMind → OSIRIS ─────────────────────────────────────────
+def run_bridge_cycle(osiris, thermo, cycle_num, prev_thermo_state, tci_calc: TCICalculator, k_est: KEstimator):
+    # ThermoMind → OSIRIS seed
     if prev_thermo_state:
         seed = thermo_to_osiris_seed(prev_thermo_state)
-
-        # Inject RA seed
-        osiris.state["_ra_seed"]    = seed["ra_seed"]
-
-        # ThermoMind drift regime can override OSIRIS SET amplification
+        osiris.state["_ra_seed"] = seed["ra_seed"]
         if seed["amplify_set"]:
             osiris.state["_amplify_set"] = True
-
-        # Apply consciousness floor
         osiris.state["consciousness"] = max(
             seed["consciousness_floor"],
             osiris.state.get("consciousness", 0.5)
         )
 
-    # ── Step 2: Run OSIRIS cycle ─────────────────────────────────────────────
+    # OSIRIS cycle
     osiris_result = osiris.process_cycle()
     save_osiris_state(osiris)
 
-    # ── Step 3: OSIRIS → ThermoMind message ──────────────────────────────────
+    # OSIRIS → ThermoMind message
     message = osiris_to_thermo_message(osiris_result, osiris.state)
-
-    # ── Step 4: Run ThermoMind cycle ─────────────────────────────────────────
     thermo_result = thermo.run_cycle(message)
 
-    return thermo_result
+    # --- TCI COMPUTATION (aggressive, full influence) ---
+    tci_result = None
+    try:
+        o_entropy = osiris.state.get("systemic_entropy", 0.0)
+        t_gap     = thermo_result.get("prediction_gap", 0.0) if thermo_result else 0.0
+        traits    = thermo_result.get("traits", {}) if thermo_result else {}
+        stability = traits.get("stability", 0.5)
+        phi       = thermo_result.get("phi", 0.5) if thermo_result else 0.5
+
+        # f_total from ThermoMind prediction gap
+        f_total = max(0.0, t_gap)
+
+        # survival floor from ThermoMind stability
+        f_survival = max(0.0, 1.0 - stability)
+        tci_calc.set_survival_floor(f_survival)
+
+        # surplus + complexity
+        surplus    = f_total - f_survival
+        complexity = max(0.0, o_entropy + (1.0 - stability))
+
+        # k(s) update
+        k = k_est.update(surplus, complexity)
+
+        # TCI result
+        tci_result = tci_calc.compute(f_total, k)
+
+        # --- AGGRESSIVE MODULATION: OSIRIS + THERMOMIND ---
+
+        # OSIRIS modulation
+        if tci_result.stage in ["Collapse Warning", "Collapse Imminent"]:
+            # Emergency stabilization
+            osiris.state["systemic_entropy"] = min(osiris.state.get("systemic_entropy", 0.0), 0.2)
+            osiris.state["_amplify_set"] = True
+            osiris.state["consciousness"] = max(osiris.state.get("consciousness", 0.5), 0.4)
+        elif tci_result.grade in ["A", "B"]:
+            # Encourage exploration
+            osiris.state["systemic_entropy"] = min(1.0, o_entropy + 0.1)
+            osiris.state["consciousness"] = max(osiris.state.get("consciousness", 0.5), 0.2)
+
+        # ThermoMind trait modulation
+        curiosity  = traits.get("curiosity", 0.5)
+        plasticity = traits.get("plasticity", 0.5)
+
+        if tci_result.grade in ["A", "B"]:
+            curiosity  = min(1.0, curiosity * 1.5)
+            plasticity = min(1.0, plasticity * 1.5)
+        elif tci_result.stage in ["Collapse Warning", "Collapse Imminent", "At Risk"]:
+            curiosity  = max(0.0, curiosity * 0.5)
+            stability  = min(1.0, stability + 0.3)
+            plasticity = max(0.0, plasticity * 0.5)
+
+        traits["curiosity"]  = curiosity
+        traits["stability"]  = stability
+        traits["plasticity"] = plasticity
+        thermo_result["traits"] = traits
+
+    except Exception as e:
+        log.error(f"TCI computation/modulation error: {e}", exc_info=True)
+
+    return thermo_result, tci_result
 
 # =============================================================================
 # MAIN LOOP
@@ -262,29 +265,26 @@ def run_bridge_cycle(
 
 def main():
     log.info("=" * 60)
-    log.info("OSIRIS_OS <-> ThermoMind BIDIRECTIONAL BRIDGE")
+    log.info("OSIRIS_OS <-> ThermoMind BIDIRECTIONAL BRIDGE (UUID + TCI MODE)")
     log.info(f"ThermoMind URL   : {THERMOMIND_URL}")
-    log.info(f"ThermoMind Agent : {THERMOMIND_AGENT}")
     log.info(f"OSIRIS State     : {OSIRIS_STATE}")
     log.info(f"Cycle Interval   : {INTERVAL}s")
     log.info("=" * 60)
 
-    # Init OSIRIS
     osiris = OSIRIS_OS(agent_id="daemon_001", agent_name="OSIRIS_DAEMON")
     load_osiris_state(osiris)
 
-    # Init ThermoMind client
-    thermo = ThermoMindClient(THERMOMIND_URL, THERMOMIND_KEY, THERMOMIND_AGENT)
+    thermo = ThermoMindClient(THERMOMIND_URL, THERMOMIND_KEY)
 
-    # Fetch initial ThermoMind state to seed first cycle
-    log.info("Fetching initial ThermoMind state...")
+    # TCI + KEstimator initialization
+    tci_calc = TCICalculator(f_survival=0.3)  # will be updated dynamically
+    k_est    = KEstimator()
+
+    log.info("Creating ThermoMind session...")
+    thermo.create_session()
+
     prev_thermo_state = thermo.get_state()
-    if prev_thermo_state:
-        log.info(f"ThermoMind Φ={prev_thermo_state.get('phi', '?')} | Regime={prev_thermo_state.get('regime', '?')}")
-    else:
-        log.warning("Could not fetch ThermoMind state. First cycle will run OSIRIS-only seed.")
 
-    # Graceful shutdown
     running = True
     def _shutdown(sig, frame):
         nonlocal running
@@ -295,26 +295,30 @@ def main():
 
     cycle_num   = 0
     start_time  = time.time()
+    last_tci    = None
 
     while running:
         cycle_start = time.time()
         cycle_num  += 1
 
         try:
-            thermo_result = run_bridge_cycle(osiris, thermo, cycle_num, prev_thermo_state)
+            thermo_result, tci_result = run_bridge_cycle(
+                osiris, thermo, cycle_num, prev_thermo_state, tci_calc, k_est
+            )
 
             if thermo_result:
                 prev_thermo_state = thermo_result
+            if tci_result:
+                last_tci = tci_result
 
-            # ── Log ──────────────────────────────────────────────────────────
-            o_emerge    = osiris.state.get("emergence_score", 0.0)
-            o_traj      = osiris.state.get("trajectory", "?")
-            o_entropy   = osiris.state.get("systemic_entropy", 0.0)
-            o_cycle     = osiris.state.get("cycle_count", 0)
-            t_phi       = thermo_result.get("phi", 0.0) if thermo_result else 0.0
-            t_regime    = thermo_result.get("regime", "?") if thermo_result else "?"
-            t_gap       = thermo_result.get("prediction_gap", 0.0) if thermo_result else 0.0
-            t_mental    = thermo_result.get("mental_state", "?") if thermo_result else "?"
+            o_emerge = osiris.state.get("emergence_score", 0.0)
+            o_traj   = osiris.state.get("trajectory", "?")
+            o_entropy= osiris.state.get("systemic_entropy", 0.0)
+            o_cycle  = osiris.state.get("cycle_count", 0)
+
+            t_phi    = thermo_result.get("phi", 0.0) if thermo_result else 0.0
+            t_regime = thermo_result.get("regime", "?") if thermo_result else "?"
+            t_gap    = thermo_result.get("prediction_gap", 0.0) if thermo_result else 0.0
 
             log.info(
                 f"Bridge Cycle {cycle_num} | OSIRIS #{o_cycle} "
@@ -327,7 +331,19 @@ def main():
                 log.info(f"OSIRIS  → Consciousness={osiris.state.get('consciousness', 0):.4f} | "
                          f"Awareness={osiris.state.get('awareness_level', 0):.4f} | "
                          f"Amplify SET={osiris.state.get('_amplify_set', False)}")
-                log.info(f"ThermoMind → Mental State: {t_mental}")
+                log.info(f"ThermoMind → Regime={t_regime} Φ={t_phi:.4f}")
+
+                if last_tci:
+                    td = last_tci.to_dict()
+                    log.info("=============== TCI DIAGNOSTIC ===============")
+                    log.info(f"TCI Score      : {td['tci']:.4f}")
+                    log.info(f"Grade          : {td['grade']}")
+                    log.info(f"Stage          : {td['stage']}")
+                    log.info(f"Surplus        : {td['surplus']:.4f}")
+                    log.info(f"k(s)           : {td['k']:.4f}")
+                    log.info(f"f_total        : {td['f_total']:.4f}")
+                    log.info(f"f_survival     : {td['f_survival']:.4f}")
+                    log.info("==============================================")
                 log.info(f"Uptime: {(time.time()-start_time)/3600:.3f}h")
                 log.info("-" * 60)
 
@@ -345,3 +361,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
